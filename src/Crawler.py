@@ -64,6 +64,19 @@ class Crawler:
 		while q.qsize():
 			self.invoices.update(q.get())
 
+	def get_date_range_info(self, start, end):
+		dates = list(reversed(self.dates))
+		now = dates.index(start)
+		thousand = []
+		two_hundred = []
+		while True:
+			thousand.append(self.invoices[dates[now]]['thousand'])
+			two_hundred.append(self.invoices[dates[now]]['two_hundred'])
+			if dates[now] == end:
+				break
+			now += 1
+		return thousand, two_hundred
+
 	@property
 	def dates(self):
 		return sorted(self.invoices.keys(), reverse=True)
