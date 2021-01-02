@@ -25,9 +25,17 @@ class Crawler:
 			def parse_items(items):
 				items = re.sub(r'[ ,]', '', items)
 				match = re.search(r'[共計]?(\d*)元', items)
-				spent = int(match[1]) if match else -1
+				if match:
+					spent = int(match[1])
+					items = re.sub(match[0], '', items)
+				else:
+					spent = -1
+				items = re.sub(r'\d+[杯瓶罐項]', '', items)
+				items = re.sub(r'\*\d*', '', items)
+				items = re.sub(r'[共計等，。]', '', items)
+				items = re.split(r'、|及', items)
 				return items, spent
-		
+
 			soup = parse_page(url)
 			date = soup.find('a', {'data-toggle': 'tab'}).text[:-15]
 			thousand = []
@@ -81,6 +89,6 @@ class Crawler:
 
 if __name__ == '__main__':
 	crawler = Crawler()
-	with open('spents.txt', 'w') as file:
-		file.write('\n'.join(map(str,crawler.spents)))
+	with open('items.txt', 'w') as file:
+		file.write('\n'.join(map(str,crawler.items)))
 		
