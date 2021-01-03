@@ -64,18 +64,32 @@ class Crawler:
 		while q.qsize():
 			self.invoices.update(q.get())
 
-	def get_date_range_info(self, start, end):
-		dates = list(reversed(self.dates))
-		now = dates.index(start)
-		thousand = []
-		two_hundred = []
+	def get_date_range_info(self, earlier_date, later_date):
+		dates = self.dates
+		now = dates.index(later_date)
+		thousand_addrs = Counter()
+		thousand_items = Counter()
+		two_hundred_addrs = Counter()
+		two_hundred_items = Counter()
 		while True:
-			thousand.append(self.invoices[dates[now]]['thousand'])
-			two_hundred.append(self.invoices[dates[now]]['two_hundred'])
-			if dates[now] == end:
+			for price, obj in (('thousand', (thousand_addrs, thousand_items)), ('two_hundred', (two_hundred_addrs, two_hundred_items))):
+				obj[0].update([ i.addr for i in self.invoices[dates[now]][price] ])
+				for i in self.invoices[dates[now]][price]:
+					obj[1].update(i.items)
+			if dates[now] == earlier_date:
 				break
 			now += 1
-		return thousand, two_hundred
+
+		return {
+			'特別獎1000萬': {
+				'區域': thousand_addrs,
+				'消費項目': thousand_items
+			}, 
+			'特獎200萬': {
+				'區域': two_hundred_addrs, 
+				'消費項目': two_hundred_items
+			}
+		}
 
 	@property
 	def dates(self):

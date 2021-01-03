@@ -1,7 +1,10 @@
 import tkinter as tk
 from tkinter import messagebox
 from tkinter import ttk
+from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg
+from pyparsing import col
 from Crawler import Crawler	
+from Chart import Chart
 
 class Filter(tk.Frame):
 	def __init__(self, parent):
@@ -25,7 +28,20 @@ class Filter(tk.Frame):
 		if self.start_date.get() > self.end_date.get():
 			messagebox.showerror(title='時間區段錯誤', message='開始必須比結束來得早！')
 			return
-		print(self.crawler.get_date_range_info(self.start_date.get(), self.end_date.get()))
+		range_info = self.crawler.get_date_range_info(self.start_date.get(), self.end_date.get())
+		figs = []
+		for price, cnts in range_info.items():
+			figs.extend([ Chart(cnt, price, content).fig for content, cnt in cnts.items() ])
+		
+		self.pies = []
+		for col, f in enumerate(figs):
+			pie = FigureCanvasTkAgg(f, self).get_tk_widget()
+			pie.grid(column=col, row=2)
+			self.pies.append(pie)
+
+		#pie = FigureCanvasTkAgg(f, self).get_tk_widget()
+		#pie.grid(column=0, row=2)
+		
 
 if __name__ == '__main__':
 	root = tk.Tk()
