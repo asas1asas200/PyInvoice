@@ -2,49 +2,63 @@ import tkinter as tk
 from tkinter import messagebox
 from tkinter import ttk
 from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg
+from matplotlib.font_manager import FontProperties
 from pyparsing import col
 from Crawler import Crawler	
 from Chart import Chart
 
-class Filter(tk.Frame):
-	def __init__(self, parent):
-		self.crawler = Crawler()
+class SearchBar(tk.Frame):
+	def __init__(self, parent, dates):
+		#self.crawler = Crawler()
 		super().__init__(parent)
 		self.start_label = tk.Label(self, text='開始')
 		self.end_label = tk.Label(self, text='結束')
-		self.start_date = ttk.Combobox(self, values=self.crawler.dates, state='readonly')
-		self.end_date = ttk.Combobox(self, values=self.crawler.dates, state='readonly')
-		self.search_button = tk.Button(self, text='查詢', state=tk.NORMAL, command=self.search)
+		self.start_date = ttk.Combobox(self, values=dates, state='readonly')
+		self.end_date = ttk.Combobox(self, values=dates, state='readonly')
+		self.search_button = tk.Button(self, text='查詢', state=tk.NORMAL, command=parent.search)
 		self.start_label.grid(column=0, row=0)
 		self.end_label.grid(column=1, row=0)
 		self.start_date.grid(column=0, row=1)
 		self.end_date.grid(column=1, row=1)
 		self.search_button.grid(column=2, row=0, rowspan=2, sticky=[tk.N, tk.S])
 
-	def search(self):
-		if self.start_date.get() == '' or self.end_date.get() == '':
-			messagebox.showerror(title='開始或結束時間為空值', message='請選擇時間區段！')
-			return
-		if self.start_date.get() > self.end_date.get():
-			messagebox.showerror(title='時間區段錯誤', message='開始必須比結束來得早！')
-			return
-		range_info = self.crawler.get_date_range_info(self.start_date.get(), self.end_date.get())
-		figs = []
-		for price, cnts in range_info.items():
-			figs.extend([ Chart(cnt, price, content).fig for content, cnt in cnts.items() ])
-		
-		self.pies = []
-		for col, f in enumerate(figs):
-			pie = FigureCanvasTkAgg(f, self).get_tk_widget()
-			pie.grid(column=col, row=2)
-			self.pies.append(pie)
+class InfoTab(tk.Frame):
+	def __init__(self, parent):
+		super().__init__(parent)
+	def display_chart(self, cnt):
+		fig = Chart(cnt).fig
+		pie = FigureCanvasTkAgg(fig, self).get_tk_widget()
+		pie.grid(column=1, row=2)
 
-		#pie = FigureCanvasTkAgg(f, self).get_tk_widget()
-		#pie.grid(column=0, row=2)
-		
+class MainWindow(tk.Tk):
+	def __init__(self):
+		super().__init__()
+		self.title('歷年發票特別獎、特獎分析')
+		self.crawler = Crawler()
+		self.search_bar = SearchBar(self, self.crawler.dates)
+		self.search_bar.pack()
+		self.nb = ttk.Notebook(self)
+		self.tabs = [ InfoTab(self.nb) for _ in range(len(self.crawler.titles))]
+		for tab, title in zip(self.tabs, self.crawler.titles):
+			self.nb.add(tab, text=title)
+		self.nb.pack()
+
+	def search(self):
+		beg = self.search_bar.start_date.get()
+		end = self.search_bar.end_date.get()
+		try:
+			range_info = self.crawler.get_date_range_info(beg, end)
+		except ValueError:
+			messagebox.showerror(title='開始或結束時間為空值', message='請選擇時間區段！')
+		except IndexError:
+			messagebox.showerror(title='時間區段錯誤', message='開始必須比結束來得早！')
+		else:
+			for tab, info in zip(self.tabs, range_info):
+				tab.display_chart(info)
+
+#		print('Hi there')
+	
 
 if __name__ == '__main__':
-	root = tk.Tk()
-	main = Filter(root)
-	main.pack(fill='both', expand=True)
+	root = MainWindow()
 	root.mainloop()

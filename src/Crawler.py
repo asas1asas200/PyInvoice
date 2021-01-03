@@ -79,7 +79,8 @@ class Crawler:
 			if dates[now] == earlier_date:
 				break
 			now += 1
-
+		return [thousand_items, thousand_addrs, two_hundred_items, two_hundred_addrs]
+		'''
 		return {
 			'特別獎1000萬': {
 				'區域': thousand_addrs,
@@ -90,6 +91,7 @@ class Crawler:
 				'消費項目': two_hundred_items
 			}
 		}
+		'''
 
 	@property
 	def dates(self):
@@ -102,6 +104,10 @@ class Crawler:
 				for j in i[price]:
 					ret.append(getattr(j, attr))
 		return sorted(ret)
+	@property
+	def titles(self):
+		return ['特別獎1000萬--交易項目', '特別獎1000萬--縣市', '特獎200萬--交易項目', '特獎200萬--縣市']
+
 	@property
 	def spents(self):
 		return self.__get_property('spent')
