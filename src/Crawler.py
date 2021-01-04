@@ -107,8 +107,3 @@ class Crawler:
 	@property
 	def addrs(self):
 		return self.__get_property('addr')
-
-if __name__ == '__main__':
-	crawler = Crawler()
-	with open('items.txt', 'w') as file:
-		file.write('\n'.join(map(str,crawler.items)))

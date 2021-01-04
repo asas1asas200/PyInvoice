@@ -23,6 +23,3 @@ class PieChart(Figure):
 			bbox_to_anchor=(0.5, -0.1)
 		)
 		self.subplots_adjust(left=0., right=1., top=1.05)
-
-if __name__ == '__main__':
-	pass

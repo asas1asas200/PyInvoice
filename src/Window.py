@@ -9,7 +9,6 @@ from Chart import PieChart
 
 class SearchBar(tk.Frame):
 	def __init__(self, parent, dates):
-		#self.crawler = Crawler()
 		super().__init__(parent)
 		self.start_label = tk.Label(self, text='開始')
 		self.end_label = tk.Label(self, text='結束')
@@ -55,7 +54,6 @@ class MainWindow(tk.Tk):
 		else:
 			for tab, info in zip(self.tabs.values(), range_info):
 				tab.display_chart(info)
-
 
 if __name__ == '__main__':
 	root = MainWindow()
