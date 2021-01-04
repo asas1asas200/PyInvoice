@@ -2,9 +2,8 @@ import tkinter as tk
 from tkinter import messagebox
 from tkinter import ttk
 from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg
-from matplotlib.font_manager import FontProperties
-from pyparsing import col
-from Crawler import Crawler	
+from threading import Thread
+from Crawler import Crawler
 from Chart import PieChart
 
 class SearchBar(tk.Frame):
@@ -34,6 +33,7 @@ class MainWindow(tk.Tk):
 		super().__init__()
 		self.title('歷年發票特別獎、特獎分析')
 		self.crawler = Crawler()
+		self.loading()
 		self.search_bar = SearchBar(self, self.crawler.dates)
 		self.search_bar.pack()
 		self.nb = ttk.Notebook(self)
@@ -41,6 +41,28 @@ class MainWindow(tk.Tk):
 		for tab, title in zip(self.tabs.values(), self.crawler.titles):
 			self.nb.add(tab, text=title)
 		self.nb.pack(fill='both')
+
+	def loading(self):
+		popup = tk.Toplevel(self, takefocus=True)
+		popup.title('下載中...')
+		popup.resizable(0, 0)
+		progress = self.crawler.schedule
+		prompt_text = tk.StringVar()
+		prompt_label = tk.Label(popup, textvariable=prompt_text)
+		progress_var = tk.DoubleVar()
+		progress_bar = ttk.Progressbar(popup, variable=progress_var, maximum=progress[1])
+		progress_bar.pack(fill='both')
+		prompt_label.pack()
+		self.withdraw()
+		Thread(target=self.crawler.crawling).start()
+		while progress[0] != progress[1]:
+			popup.update()
+			progress = self.crawler.schedule
+			progress_var.set(progress[0])
+			prompt_text.set(f'正在下載頁面資料： {progress[0]:3d}/{progress[1]:3d}')
+		self.deiconify()
+		popup.destroy()
+
 
 	def search(self):
 		beg = self.search_bar.start_date.get()

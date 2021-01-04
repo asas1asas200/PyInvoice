@@ -1,6 +1,5 @@
 import requests
 from bs4 import BeautifulSoup
-from time import time
 from threading import Thread
 from queue import Queue
 from collections import namedtuple, Counter
@@ -8,11 +7,19 @@ import re
 class Crawler:
 	def __init__(self):
 		self.Invoice = namedtuple('Invoice', ['com', 'addr', 'items', 'spent'])
-		def parse_page(url):
-			r = requests.get(url)
-			r.encoding = 'utf-8'
-			soup = BeautifulSoup(r.text, 'html.parser')
-			return soup
+		self.home = 'https://www.etax.nat.gov.tw/'
+		soup = self.parse_page('https://www.etax.nat.gov.tw/etw-main/web/ETW183W1/')
+		self.pages = soup.find_all('td', {'headers': 'title'})[:-8:2]
+		self.q = Queue()
+
+	@staticmethod
+	def parse_page(url):
+		r = requests.get(url)
+		r.encoding = 'utf-8'
+		soup = BeautifulSoup(r.text, 'html.parser')
+		return soup
+
+	def crawling(self):
 		def get_invoices(url, q):
 			def parse_addr(addr):
 				addr = addr[:3]
@@ -36,7 +43,7 @@ class Crawler:
 				items = re.split(r'、|及', items)
 				return items, spent
 
-			soup = parse_page(url)
+			soup = self.parse_page(url)
 			date = soup.find('a', {'data-toggle': 'tab'}).text[:-15]
 			thousand = []
 			two_hundred = []
@@ -46,23 +53,22 @@ class Crawler:
 					addr = parse_addr(addr)
 					items, spent = parse_items(items)
 					price.append(self.Invoice(com, addr, items, spent))
-
 			q.put({date: {'thousand': thousand, 'two_hundred': two_hundred}})
 
-		self.home = 'https://www.etax.nat.gov.tw/'
-		soup = parse_page('https://www.etax.nat.gov.tw/etw-main/web/ETW183W1/')
-		lst = soup.find_all('td', {'headers': 'title'})[:-8:2]
-		q = Queue()
 		threads = []
-		for i in lst:
-			t = Thread(target=get_invoices, args=(self.home + i.find('a')['href'], q))
+		for page in self.pages:
+			t = Thread(target=get_invoices, args=(self.home + page.find('a')['href'], self.q))
 			t.start()
 			threads.append(t)
-		for i in threads:
-			i.join()
+		for t in threads:
+			t.join()
 		self.invoices = {}
-		while q.qsize():
-			self.invoices.update(q.get())
+		while self.q.qsize():
+			self.invoices.update(self.q.get())
+
+	@property
+	def schedule(self):
+		return (len(self.pages) if hasattr(self, 'invoices') else self.q.qsize(), len(self.pages))
 
 	def get_date_range_info(self, earlier_date, later_date):
 		dates = self.dates
