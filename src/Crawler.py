@@ -48,7 +48,7 @@ class Crawler:
 					price.append(self.Invoice(com, addr, items, spent))
 
 			q.put({date: {'thousand': thousand, 'two_hundred': two_hundred}})
-			
+
 		self.home = 'https://www.etax.nat.gov.tw/'
 		soup = parse_page('https://www.etax.nat.gov.tw/etw-main/web/ETW183W1/')
 		lst = soup.find_all('td', {'headers': 'title'})[:-8:2]
@@ -80,18 +80,6 @@ class Crawler:
 				break
 			now += 1
 		return [thousand_items, thousand_addrs, two_hundred_items, two_hundred_addrs]
-		'''
-		return {
-			'特別獎1000萬': {
-				'區域': thousand_addrs,
-				'消費項目': thousand_items
-			}, 
-			'特獎200萬': {
-				'區域': two_hundred_addrs, 
-				'消費項目': two_hundred_items
-			}
-		}
-		'''
 
 	@property
 	def dates(self):
@@ -124,4 +112,3 @@ if __name__ == '__main__':
 	crawler = Crawler()
 	with open('items.txt', 'w') as file:
 		file.write('\n'.join(map(str,crawler.items)))
-		

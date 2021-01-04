@@ -5,7 +5,7 @@ from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg
 from matplotlib.font_manager import FontProperties
 from pyparsing import col
 from Crawler import Crawler	
-from Chart import Chart
+from Chart import PieChart
 
 class SearchBar(tk.Frame):
 	def __init__(self, parent, dates):
@@ -26,9 +26,9 @@ class InfoTab(tk.Frame):
 	def __init__(self, parent):
 		super().__init__(parent)
 	def display_chart(self, cnt):
-		fig = Chart(cnt).fig
+		fig = PieChart(cnt)
 		pie = FigureCanvasTkAgg(fig, self).get_tk_widget()
-		pie.grid(column=1, row=2)
+		pie.pack()
 
 class MainWindow(tk.Tk):
 	def __init__(self):
@@ -38,10 +38,10 @@ class MainWindow(tk.Tk):
 		self.search_bar = SearchBar(self, self.crawler.dates)
 		self.search_bar.pack()
 		self.nb = ttk.Notebook(self)
-		self.tabs = [ InfoTab(self.nb) for _ in range(len(self.crawler.titles))]
-		for tab, title in zip(self.tabs, self.crawler.titles):
+		self.tabs = { name: InfoTab(self.nb) for name in self.crawler.titles }
+		for tab, title in zip(self.tabs.values(), self.crawler.titles):
 			self.nb.add(tab, text=title)
-		self.nb.pack()
+		self.nb.pack(fill='both')
 
 	def search(self):
 		beg = self.search_bar.start_date.get()
@@ -53,11 +53,9 @@ class MainWindow(tk.Tk):
 		except IndexError:
 			messagebox.showerror(title='時間區段錯誤', message='開始必須比結束來得早！')
 		else:
-			for tab, info in zip(self.tabs, range_info):
+			for tab, info in zip(self.tabs.values(), range_info):
 				tab.display_chart(info)
 
-#		print('Hi there')
-	
 
 if __name__ == '__main__':
 	root = MainWindow()
