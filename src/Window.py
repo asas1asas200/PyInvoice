@@ -3,6 +3,8 @@ from tkinter import messagebox
 from tkinter import ttk
 from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg
 from threading import Thread
+
+import requests
 from Crawler import Crawler
 from Chart import PieChart
 
@@ -32,7 +34,11 @@ class MainWindow(tk.Tk):
 	def __init__(self):
 		super().__init__()
 		self.title('歷年發票特別獎、特獎分析')
-		self.crawler = Crawler()
+		try:
+			self.crawler = Crawler()
+		except requests.exceptions.ConnectionError:
+			messagebox.showerror(title='連線錯誤', message='請確認與網際網路的連線')
+			exit(0)
 		self.loading()
 		self.search_bar = SearchBar(self, self.crawler.dates)
 		self.search_bar.pack()
