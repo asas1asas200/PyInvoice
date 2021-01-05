@@ -4,13 +4,13 @@ from threading import Thread
 from queue import Queue
 from collections import namedtuple, Counter
 import re
+
 class Crawler:
 	def __init__(self):
-		self.Invoice = namedtuple('Invoice', ['com', 'addr', 'items', 'spent'])
 		self.home = 'https://www.etax.nat.gov.tw/'
-		soup = self.parse_page('https://www.etax.nat.gov.tw/etw-main/web/ETW183W1/')
-		self.pages = soup.find_all('td', {'headers': 'title'})[:-8:2]
+		self.soup = self.parse_page('https://www.etax.nat.gov.tw/etw-main/web/ETW183W1/')
 		self.q = Queue()
+		self.pages = []	
 
 	@staticmethod
 	def parse_page(url):
@@ -24,8 +24,34 @@ class Crawler:
 		soup = BeautifulSoup(r.text, 'html.parser')
 		return soup
 
-	def crawling(self):
-		def get_invoices(url, q):
+	@staticmethod
+	def _crawling_pages(pages, page_filter):
+		def decorator(func):
+			def wrap():
+				threads = []
+				for page in pages:
+					t = Thread(target=func, args=(page_filter(page),))
+					t.start()
+					threads.append(t)
+				for t in threads:
+					t.join()
+				return wrap
+			return wrap
+		return decorator
+
+	@property
+	def schedule(self):
+		return (len(self.pages) if hasattr(self, 'invoices') else self.q.qsize(), len(self.pages))
+
+class AnalyzeCrawler(Crawler):
+	def __init__(self):
+		super().__init__()
+		self.Invoice = namedtuple('Invoice', ['com', 'addr', 'items', 'spent'])
+		self.pages = self.soup.find_all('td', {'headers': 'title'})[:-8:2]
+
+	def analyzing(self):
+		@self._crawling_pages(self.pages, lambda x: self.home + x.find('a')['href'])
+		def get_invoices(url):
 			def parse_addr(addr):
 				addr = addr[:3]
 				if addr == '台北市':
@@ -65,22 +91,12 @@ class Crawler:
 					addr = parse_addr(addr)
 					items, spent = parse_items(items)
 					price.append(self.Invoice(com, addr, items, spent))
-			q.put({date: {'thousand': thousand, 'two_hundred': two_hundred}})
+			self.q.put({date: {'thousand': thousand, 'two_hundred': two_hundred}})
 
-		threads = []
-		for page in self.pages:
-			t = Thread(target=get_invoices, args=(self.home + page.find('a')['href'], self.q))
-			t.start()
-			threads.append(t)
-		for t in threads:
-			t.join()
+		get_invoices()
 		self.invoices = {}
 		while self.q.qsize():
 			self.invoices.update(self.q.get())
-
-	@property
-	def schedule(self):
-		return (len(self.pages) if hasattr(self, 'invoices') else self.q.qsize(), len(self.pages))
 
 	def get_date_range_info(self, earlier_date, later_date):
 		dates = self.dates
@@ -125,3 +141,12 @@ class Crawler:
 	@property
 	def addrs(self):
 		return self.__get_property('addr')
+
+
+class RedeemCrawler(Crawler):
+	def __init__(self):
+		super().__init__()
+		self.pages = self.soup.find_all('td', {'headers': 'title'})[1:-8:2]
+
+if __name__ == '__main__':
+	crawler = RedeemCrawler()

@@ -4,7 +4,7 @@ from tkinter import ttk
 from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg
 from threading import Thread
 import requests
-from Crawler import Crawler
+from Crawler import AnalyzeCrawler
 from Chart import PieChart
 
 class SearchBar(tk.Frame):
@@ -33,12 +33,12 @@ class InfoTab(tk.Frame):
 		self.pie = FigureCanvasTkAgg(fig, self).get_tk_widget()
 		self.pie.pack()
 
-class MainWindow(tk.Toplevel):
+class Analyze(tk.Toplevel):
 	def __init__(self):
 		super().__init__()
 		self.title('歷年發票特別獎、特獎分析')
 		try:
-			self.crawler = Crawler()
+			self.crawler = AnalyzeCrawler()
 			self.loading()
 		except requests.exceptions.ConnectionError:
 			messagebox.showerror(title='連線錯誤', message='請確認與網際網路的連線')
@@ -64,7 +64,7 @@ class MainWindow(tk.Toplevel):
 		progress_bar.pack(fill='both')
 		prompt_label.pack()
 		self.withdraw()
-		Thread(target=self.crawler.crawling).start()
+		Thread(target=self.crawler.analyzing).start()
 		while progress[0] != progress[1]:
 			popup.update()
 			progress = self.crawler.schedule
@@ -86,3 +86,8 @@ class MainWindow(tk.Toplevel):
 		else:
 			for tab, info in zip(self.tabs.values(), range_info):
 				tab.display_chart(info)
+
+
+class Redeem(tk.Toplevel):
+	def __init__(self):
+		super().__init__()
