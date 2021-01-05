@@ -41,13 +41,13 @@ class Crawler:
 				items = re.sub(r'\*\d*', '', items)
 				items = re.sub(r'[共計等，。]', '', items)
 				items = re.split(r'、|及', items)
-				for item in items:
+				for idx, item in enumerate(items):
 					if '應用程式' in item:
-						item = '應用程式'
+						item[idx] = '應用程式'
 					elif '服務費' in item:
-						item = '服務費'
+						item[idx] = '服務費'
 					elif '遊戲點數' in item:
-						item = '遊戲點數'
+						item[idx] = '遊戲點數'
 				return items, spent
 
 			soup = self.parse_page(url)
