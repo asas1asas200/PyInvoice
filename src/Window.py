@@ -25,9 +25,13 @@ class InfoTab(tk.Frame):
 	def __init__(self, parent):
 		super().__init__(parent)
 	def display_chart(self, cnt):
+		try:
+			self.pie.destroy()
+		except AttributeError:
+			pass
 		fig = PieChart(cnt)
-		pie = FigureCanvasTkAgg(fig, self).get_tk_widget()
-		pie.pack()
+		self.pie = FigureCanvasTkAgg(fig, self).get_tk_widget()
+		self.pie.pack()
 
 class MainWindow(tk.Toplevel):
 	def __init__(self):
