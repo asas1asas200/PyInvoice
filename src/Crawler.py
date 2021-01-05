@@ -14,7 +14,12 @@ class Crawler:
 
 	@staticmethod
 	def parse_page(url):
-		r = requests.get(url)
+		while True:		
+			try:
+				r = requests.get(url)
+				break
+			except requests.exceptions.ConnectionError:
+				pass		
 		r.encoding = 'utf-8'
 		soup = BeautifulSoup(r.text, 'html.parser')
 		return soup

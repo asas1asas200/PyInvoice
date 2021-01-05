@@ -35,11 +35,11 @@ class MainWindow(tk.Toplevel):
 		self.title('歷年發票特別獎、特獎分析')
 		try:
 			self.crawler = Crawler()
+			self.loading()
 		except requests.exceptions.ConnectionError:
 			messagebox.showerror(title='連線錯誤', message='請確認與網際網路的連線')
 			self.destroy()
 		else:
-			self.loading()
 			self.search_bar = SearchBar(self, self.crawler.dates)
 			self.search_bar.pack()
 			self.nb = ttk.Notebook(self)
