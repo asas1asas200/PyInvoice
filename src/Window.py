@@ -3,7 +3,6 @@ from tkinter import messagebox
 from tkinter import ttk
 from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg
 from threading import Thread
-
 import requests
 from Crawler import Crawler
 from Chart import PieChart
@@ -30,7 +29,7 @@ class InfoTab(tk.Frame):
 		pie = FigureCanvasTkAgg(fig, self).get_tk_widget()
 		pie.pack()
 
-class MainWindow(tk.Tk):
+class MainWindow(tk.Toplevel):
 	def __init__(self):
 		super().__init__()
 		self.title('歷年發票特別獎、特獎分析')
@@ -38,15 +37,16 @@ class MainWindow(tk.Tk):
 			self.crawler = Crawler()
 		except requests.exceptions.ConnectionError:
 			messagebox.showerror(title='連線錯誤', message='請確認與網際網路的連線')
-			exit(0)
-		self.loading()
-		self.search_bar = SearchBar(self, self.crawler.dates)
-		self.search_bar.pack()
-		self.nb = ttk.Notebook(self)
-		self.tabs = { name: InfoTab(self.nb) for name in self.crawler.titles }
-		for tab, title in zip(self.tabs.values(), self.crawler.titles):
-			self.nb.add(tab, text=title)
-		self.nb.pack(fill='both')
+			self.destroy()
+		else:
+			self.loading()
+			self.search_bar = SearchBar(self, self.crawler.dates)
+			self.search_bar.pack()
+			self.nb = ttk.Notebook(self)
+			self.tabs = { name: InfoTab(self.nb) for name in self.crawler.titles }
+			for tab, title in zip(self.tabs.values(), self.crawler.titles):
+				self.nb.add(tab, text=title)
+			self.nb.pack(fill='both')
 
 	def loading(self):
 		popup = tk.Toplevel(self, takefocus=True)
@@ -82,7 +82,3 @@ class MainWindow(tk.Tk):
 		else:
 			for tab, info in zip(self.tabs.values(), range_info):
 				tab.display_chart(info)
-
-if __name__ == '__main__':
-	root = MainWindow()
-	root.mainloop()
