@@ -25,12 +25,12 @@ class Crawler:
 		return soup
 
 	@staticmethod
-	def _crawling_pages(pages, page_filter):
+	def _crawling_pages(pages):
 		def decorator(func):
 			def wrap():
 				threads = []
 				for page in pages:
-					t = Thread(target=func, args=(page_filter(page),))
+					t = Thread(target=func, args=(page,))
 					t.start()
 					threads.append(t)
 				for t in threads:
@@ -47,10 +47,10 @@ class AnalyzeCrawler(Crawler):
 	def __init__(self):
 		super().__init__()
 		self.Invoice = namedtuple('Invoice', ['com', 'addr', 'items', 'spent'])
-		self.pages = self.soup.find_all('td', {'headers': 'title'})[:-8:2]
+		self.pages = [ self.home + i.find('a')['href'] for i in self.soup.find_all('td', {'headers': 'title'})[:-8:2] ]
 
 	def analyzing(self):
-		@self._crawling_pages(self.pages, lambda x: self.home + x.find('a')['href'])
+		@self._crawling_pages(self.pages)
 		def get_invoices(url):
 			def parse_addr(addr):
 				addr = addr[:3]
@@ -146,7 +146,21 @@ class AnalyzeCrawler(Crawler):
 class RedeemCrawler(Crawler):
 	def __init__(self):
 		super().__init__()
-		self.pages = self.soup.find_all('td', {'headers': 'title'})[1:-8:2]
+		self.pages = [ self.home + i.find('a')['href'] for i in self.soup.find_all('td', {'headers': 'title'})[1:-8:2] ]
+		self.prize_numbers = {}
+
+	def crawling(self):
+		@self._crawling_pages(self.pages)
+		def get_prize_number(url):
+			lst = self.parse_page(url).select('tbody tr')
+			self.q.put([ lst[i].text for i in (1, 3, 5, 12) ])
+
+		get_prize_number()
+		while self.q.qsize():
+			print(self.q.get())
+
+
 
 if __name__ == '__main__':
 	crawler = RedeemCrawler()
+	crawler.crawling()
