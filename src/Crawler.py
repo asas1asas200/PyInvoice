@@ -144,6 +144,13 @@ class AnalyzeCrawler(Crawler):
 
 
 class RedeemCrawler(Crawler):
+	class PrizeInfo:
+		def __init__(self, special_thousand, special_two_hundred, top, two_hundred):
+			self.special_thousand = special_thousand
+			self.special_two_hundred = special_two_hundred
+			self.top = top
+			self.two_hundred = two_hundred
+
 	def __init__(self):
 		super().__init__()
 		self.pages = [ self.home + i.find('a')['href'] for i in self.soup.find_all('td', {'headers': 'title'})[1:-8:2] ]
@@ -152,12 +159,28 @@ class RedeemCrawler(Crawler):
 	def crawling(self):
 		@self._crawling_pages(self.pages)
 		def get_prize_number(url):
-			lst = self.parse_page(url).select('tbody tr')
-			self.q.put([ lst[i].text for i in (1, 3, 5, 12) ])
+			soup = self.parse_page(url)
+			lst = soup.select('tbody tr')
+			title = soup.find('td', {'class': 'title'}).text
+			year = re.search(r'(\d+)年', title).group(1)
+			months = [ int(i) for i in title.split()[1:4:2] ]
+			info = self.PrizeInfo(
+				re.search(r'\d+', lst[1].text).group(),
+				re.search(r'\d+', lst[3].text).group(),
+				re.search(r'((\d+).*)', lst[5].text).group().split(),
+				[ i for i in re.split(r'[、 ]', re.search(r'((\d+).*)', lst[12].text).group()) if i ]
+			)
+			self.q.put(( year, [ (month, info) for month in months ] ))
 
 		get_prize_number()
 		while self.q.qsize():
-			print(self.q.get())
+			now = self.q.get()
+			try:
+				self.prize_numbers[now[0]].extend(now[1])
+			except KeyError:
+				self.prize_numbers[now[0]] = now[1]
+		for key, value in self.prize_numbers.items():
+			self.prize_numbers[key] = dict(value)
 
 
 
