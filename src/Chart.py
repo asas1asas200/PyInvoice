@@ -1,6 +1,5 @@
 from matplotlib.font_manager import FontProperties
 from matplotlib.figure import Figure
-from collections import Counter
 from os import path
 
 class PieChart(Figure):

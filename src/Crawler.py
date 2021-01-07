@@ -18,12 +18,12 @@ class Crawler:
 
 	@staticmethod
 	def parse_page(url):
-		while True:		
+		while True:	
 			try:
 				r = requests.get(url)
 				break
 			except requests.exceptions.ConnectionError:
-				pass		
+				pass
 		r.encoding = 'utf-8'
 		soup = BeautifulSoup(r.text, 'html.parser')
 		return soup
@@ -43,9 +43,6 @@ class Crawler:
 			return wrap
 		return decorator
 
-	@property
-	def schedule(self):
-		return (len(self.pages) if hasattr(self, 'invoices') else self.q.qsize(), len(self.pages))
 
 class AnalyzeCrawler(Crawler):
 	def __init__(self):
@@ -146,6 +143,10 @@ class AnalyzeCrawler(Crawler):
 	def addrs(self):
 		return self.__get_property('addr')
 
+	@property
+	def schedule(self):
+		return (len(self.pages) if hasattr(self, 'invoices') else self.q.qsize(), len(self.pages))
+
 
 class RedeemCrawler(Crawler):
 	class PrizeInfo:
@@ -158,7 +159,6 @@ class RedeemCrawler(Crawler):
 	def __init__(self):
 		super().__init__()
 		self.pages = [ self.home + i.find('a')['href'] for i in self.soup.find_all('td', {'headers': 'title'})[1:-8:2] ]
-		self.prize_numbers = {}
 
 	def crawling(self):
 		@self._crawling_pages(self.pages)
@@ -177,6 +177,7 @@ class RedeemCrawler(Crawler):
 			self.q.put(( year, [ (month, info) for month in months ] ))
 
 		get_prize_number()
+		self.prize_numbers = {}
 		while self.q.qsize():
 			now = self.q.get()
 			try:
@@ -185,6 +186,14 @@ class RedeemCrawler(Crawler):
 				self.prize_numbers[now[0]] = now[1]
 		for key, value in self.prize_numbers.items():
 			self.prize_numbers[key] = dict(value)
+
+	@property
+	def years(self):
+		return sorted(self.prize_numbers.keys(), reverse=True)
+
+	@property
+	def schedule(self):
+		return (len(self.pages) if hasattr(self, 'prize_numbers') else self.q.qsize(), len(self.pages))
 
 
 
