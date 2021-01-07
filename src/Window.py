@@ -4,7 +4,7 @@ from tkinter import ttk
 from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg
 from threading import Thread
 import requests
-from Crawler import AnalyzeCrawler
+from Crawler import AnalyzeCrawler, Crawler
 from Chart import PieChart
 
 class SearchBar(tk.Frame):
@@ -33,46 +33,50 @@ class InfoTab(tk.Frame):
 		self.pie = FigureCanvasTkAgg(fig, self).get_tk_widget()
 		self.pie.pack()
 
+class ProgressWindow(tk.Toplevel):
+	def __init__(self, schedule):
+		super().__init__(takefocus=True)
+		self.title('下載中...')
+		self.resizable(0, 0)
+		self.done = schedule[0]
+		self.total = schedule[1]
+		self.prompt_text = tk.StringVar()
+		self.progress_var = tk.DoubleVar()
+		tk.Label(self, textvariable=self.prompt_text).pack()
+		ttk.Progressbar(self, variable=self.progress_var, maximum=self.total).pack(fill='both')
+	def loading(self, crawler):
+		Thread(target=crawler.crawling).start()		
+		while self.done != self.total:
+			self.update()
+			self.done = crawler.schedule[0]
+			self.progress_var.set(self.done)
+			self.prompt_text.set(f'正在下載頁面資料： {self.done: 3d}/{self.total: 3d}')
+		self.destroy()
+
+def loading_window(window):
+	try:
+		window.crawler = AnalyzeCrawler()
+		progress = ProgressWindow(window.crawler.schedule)
+		window.withdraw()
+		progress.loading(window.crawler)
+	except requests.exceptions.ConnectionError:
+		messagebox.showerror(title='連線錯誤', message='請確認與網際網路的連線')
+		window.destroy()
+	finally:
+		window.deiconify()
+
 class Analyze(tk.Toplevel):
 	def __init__(self):
 		super().__init__()
 		self.title('歷年發票特別獎、特獎分析')
-		try:
-			self.crawler = AnalyzeCrawler()
-			self.loading()
-		except requests.exceptions.ConnectionError:
-			messagebox.showerror(title='連線錯誤', message='請確認與網際網路的連線')
-			self.destroy()
-		else:
-			self.search_bar = SearchBar(self, self.crawler.dates)
-			self.search_bar.pack()
-			self.nb = ttk.Notebook(self)
-			self.tabs = { name: InfoTab(self.nb) for name in self.crawler.titles }
-			for tab, title in zip(self.tabs.values(), self.crawler.titles):
-				self.nb.add(tab, text=title)
-			self.nb.pack(fill='both')
-
-	def loading(self):
-		popup = tk.Toplevel(self, takefocus=True)
-		popup.title('下載中...')
-		popup.resizable(0, 0)
-		progress = self.crawler.schedule
-		prompt_text = tk.StringVar()
-		prompt_label = tk.Label(popup, textvariable=prompt_text)
-		progress_var = tk.DoubleVar()
-		progress_bar = ttk.Progressbar(popup, variable=progress_var, maximum=progress[1])
-		progress_bar.pack(fill='both')
-		prompt_label.pack()
-		self.withdraw()
-		Thread(target=self.crawler.analyzing).start()
-		while progress[0] != progress[1]:
-			popup.update()
-			progress = self.crawler.schedule
-			progress_var.set(progress[0])
-			prompt_text.set(f'正在下載頁面資料： {progress[0]:3d}/{progress[1]:3d}')
-		self.deiconify()
-		popup.destroy()
-
+		loading_window(self)
+		self.search_bar = SearchBar(self, self.crawler.dates)
+		self.search_bar.pack()
+		self.nb = ttk.Notebook(self)
+		self.tabs = { name: InfoTab(self.nb) for name in self.crawler.titles }
+		for tab, title in zip(self.tabs.values(), self.crawler.titles):
+			self.nb.add(tab, text=title)
+		self.nb.pack(fill='both')
 
 	def search(self):
 		beg = self.search_bar.start_date.get()

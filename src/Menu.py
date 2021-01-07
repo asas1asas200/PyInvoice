@@ -9,8 +9,8 @@ class Menu(tk.Tk):
 		self.btn_analyze.pack()
 	def analyze(self):
 		self.withdraw()
-		form = Window.Analyze()
 		try:		
+			form = Window.Analyze()
 			self.wait_window(form)
 		except tk.TclError:
 			pass

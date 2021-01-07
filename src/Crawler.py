@@ -53,7 +53,7 @@ class AnalyzeCrawler(Crawler):
 		self.Invoice = namedtuple('Invoice', ['com', 'addr', 'items', 'spent'])
 		self.pages = [ self.home + i.find('a')['href'] for i in self.soup.find_all('td', {'headers': 'title'})[:-8:2] ]
 
-	def analyzing(self):
+	def crawling(self):
 		@self._crawling_pages(self.pages)
 		def get_invoices(url):
 			def parse_addr(addr):
