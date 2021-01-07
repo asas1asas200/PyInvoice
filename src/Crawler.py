@@ -8,6 +8,10 @@ import re
 class Crawler:
 	def __init__(self):
 		self.home = 'https://www.etax.nat.gov.tw/'
+		try:
+			requests.get(self.home)
+		except requests.exceptions.ConnectionError as Err:
+			raise Err
 		self.soup = self.parse_page('https://www.etax.nat.gov.tw/etw-main/web/ETW183W1/')
 		self.q = Queue()
 		self.pages = []	
