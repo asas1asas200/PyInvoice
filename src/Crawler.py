@@ -1,9 +1,9 @@
+import re
+from queue import Queue
+from threading import Thread
+from collections import namedtuple, Counter
 import requests
 from bs4 import BeautifulSoup
-from threading import Thread
-from queue import Queue
-from collections import namedtuple, Counter
-import re
 
 class Crawler:
 	def __init__(self):
@@ -187,7 +187,7 @@ class RedeemCrawler(Crawler):
 		for key, value in self.prize_numbers.items():
 			self.prize_numbers[key] = dict(value)
 
-	def get_price(self, number, year, month):
+	def get_price(self, number, year: str, month: int):
 		price = {
 			3: 200,
 			4: 1000,

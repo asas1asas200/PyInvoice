@@ -1,10 +1,11 @@
+import csv
 from threading import Thread
-from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg
-from tkinter import messagebox, ttk, filedialog
-import tkinter as tk
 import requests
-from Crawler import AnalyzeCrawler, RedeemCrawler
+import tkinter as tk
+from tkinter import messagebox, ttk, filedialog
+from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg
 from Chart import PieChart
+from Crawler import AnalyzeCrawler, RedeemCrawler
 
 
 class ProgressWindow(tk.Toplevel):
@@ -128,13 +129,33 @@ class Redeem(tk.Toplevel):
 			self.invoices = tk.Listbox(self)
 			self.filepath = tk.Entry(self, text='')
 			self.filepath.grid(column=0, row=0, sticky=tk.EW, ipadx=40)
-			tk.Button(self, text='選擇檔案...', command=self.open_file).grid(column=1, row=0, sticky=tk.EW)
-			self.invoices.grid(column=0, row=1, columnspan=2, sticky=tk.EW)
+			tk.Button(self, text='選擇檔案...', command=self.open_file).grid(column=1, row=0)
+			tk.Button(self, text='查詢', command=self.search).grid(column=2, row=0, sticky=tk.EW)
+			self.invoices.grid(column=0, row=1, columnspan=3, sticky=tk.EW)
 
 		def open_file(self):
 			filepath = filedialog.askopenfilename(initialdir='.', title='Select file', filetypes=(('csv files', '*.csv'),))
 			self.filepath.delete(0, tk.END)
 			self.filepath.insert(0, filepath)
+
+		def search(self):
+			invoice_buf = {}
+			with open(self.filepath.get(), 'r') as file:
+				table = csv.DictReader(file)
+				for invoice_info in table:
+					for date, number in invoice_info.items():
+						if number:
+							year, month = date.split('/')
+							invoice = '{}: {:>}'.format(number,
+								self.parent.crawler.get_price(number, year, int(month))) 
+							try:
+								invoice_buf[date].append(invoice)
+							except KeyError:
+								invoice_buf[date] = [invoice]
+			self.invoices.delete(0, tk.END)
+			for date, numbers in sorted(invoice_buf.items(), key=lambda x: x[0]):	
+				for number in sorted(numbers, key=lambda x: int(x.split()[-1]), reverse=True):
+					self.invoices.insert(tk.END, date+': '+number)
 
 	def __init__(self):
 		super().__init__()

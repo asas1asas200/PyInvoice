@@ -1,6 +1,6 @@
-from matplotlib.font_manager import FontProperties
-from matplotlib.figure import Figure
 from os import path
+from matplotlib.figure import Figure
+from matplotlib.font_manager import FontProperties
 
 class PieChart(Figure):
 	def __init__(self, cnt):
