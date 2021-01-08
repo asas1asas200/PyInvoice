@@ -94,10 +94,12 @@ class Redeem(tk.Toplevel):
 	class SearchByInputTab(tk.Frame):
 		def __init__(self, parent, years):
 			super().__init__(parent)
+			self.parent = parent
 			self.years_selector = ttk.Combobox(self, values=years, state='readonly')
 			self.months_selector = ttk.Combobox(self, values=['{:02d} ~ {:02d} 月'.format(i-1, i) for i in range(12, 1, -2)], state='readonly')
 			self.history = tk.Listbox(self)
 			self.entry = tk.Entry(self)
+			self.entry.bind('<KP_Enter>', self.search)
 			self.entry.bind('<Return>', self.search)
 			tk.Label(self, text='選擇年份').grid(column=0, row=0)
 			tk.Label(self, text='選擇月份').grid(column=1, row=0)
@@ -105,9 +107,20 @@ class Redeem(tk.Toplevel):
 			self.months_selector.grid(column=1, row=1)
 			self.history.grid(column=0, row=2, columnspan=2, sticky=tk.EW)
 			self.entry.grid(column=0, row=3, columnspan=2, sticky=tk.EW)
-		
+
 		def search(self, event):
-			print(self.entry.get())
+			number = self.entry.get()
+			try:
+				price = self.parent.crawler.get_price(number, self.years_selector.get(), int(self.months_selector.get().split()[0]))
+			except IndexError:
+				messagebox.showerror(title='沒有日期', message='請輸入要查詢的日期')
+			except KeyError:
+				messagebox.showerror(title='日期錯誤', message='還沒有該日期的發票資訊')
+			else:
+				self.history.insert(tk.END, '{}: {:>}元'.format(number, price))
+				self.history.yview(tk.END)
+			finally:
+				self.entry.delete(0, tk.END)
 
 	def __init__(self):
 		super().__init__()

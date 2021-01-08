@@ -187,6 +187,34 @@ class RedeemCrawler(Crawler):
 		for key, value in self.prize_numbers.items():
 			self.prize_numbers[key] = dict(value)
 
+	def get_price(self, number, year, month):
+		price = {
+			3: 200,
+			4: 1000,
+			5: 4000,
+			6: 10000,
+			7: 40000,
+			8: 200000
+		}
+		if number == self.prize_numbers[year][month].special_thousand:
+			return 10000000
+		elif number == self.prize_numbers[year][month].special_two_hundred:
+			return 2000000
+		else:
+			maxn = 0
+			for target in self.prize_numbers[year][month].top + self.prize_numbers[year][month].two_hundred:
+				buf = 0
+				for i, j in zip(target[::-1], number[::-1]):
+					if i == j:
+						buf += 1
+					else:
+						break
+				maxn = max(buf, maxn)
+			try:
+				return price[maxn]
+			except KeyError:
+				return 0
+
 	@property
 	def years(self):
 		return sorted(self.prize_numbers.keys(), reverse=True)
