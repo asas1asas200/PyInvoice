@@ -1,8 +1,7 @@
-import tkinter as tk
-from tkinter import messagebox
-from tkinter import ttk
-from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg
 from threading import Thread
+from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg
+from tkinter import messagebox, ttk, filedialog
+import tkinter as tk
 import requests
 from Crawler import AnalyzeCrawler, RedeemCrawler
 from Chart import PieChart
@@ -122,6 +121,21 @@ class Redeem(tk.Toplevel):
 			finally:
 				self.entry.delete(0, tk.END)
 
+	class SearchFromFileTab(tk.Frame):
+		def __init__(self, parent):
+			super().__init__(parent)
+			self.parent = parent
+			self.invoices = tk.Listbox(self)
+			self.filepath = tk.Entry(self, text='')
+			self.filepath.grid(column=0, row=0, sticky=tk.EW, ipadx=40)
+			tk.Button(self, text='選擇檔案...', command=self.open_file).grid(column=1, row=0, sticky=tk.EW)
+			self.invoices.grid(column=0, row=1, columnspan=2, sticky=tk.EW)
+
+		def open_file(self):
+			filepath = filedialog.askopenfilename(initialdir='.', title='Select file', filetypes=(('csv files', '*.csv'),))
+			self.filepath.delete(0, tk.END)
+			self.filepath.insert(0, filepath)
+
 	def __init__(self):
 		super().__init__()
 		self.title('發票兌獎')
@@ -129,4 +143,5 @@ class Redeem(tk.Toplevel):
 		self.nb = ttk.Notebook(self)
 		input_tab = self.SearchByInputTab(self, self.crawler.years)
 		self.nb.add(input_tab, text='手動輸入')
+		self.nb.add(self.SearchFromFileTab(self), text='從檔案讀入')
 		self.nb.pack(fill='both')
