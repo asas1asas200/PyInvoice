@@ -4,8 +4,8 @@ import requests
 import tkinter as tk
 from tkinter import messagebox, ttk, filedialog
 from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg
-from Chart import PieChart
-from Crawler import AnalyzeCrawler, RedeemCrawler
+from .Chart import PieChart
+from .Crawler import AnalyzeCrawler, RedeemCrawler
 
 
 class ProgressWindow(tk.Toplevel):
@@ -140,22 +140,26 @@ class Redeem(tk.Toplevel):
 
 		def search(self):
 			invoice_buf = {}
-			with open(self.filepath.get(), 'r') as file:
-				table = csv.DictReader(file)
-				for invoice_info in table:
-					for date, number in invoice_info.items():
-						if number:
-							year, month = date.split('/')
-							invoice = '{}: {:>}'.format(number,
-								self.parent.crawler.get_price(number, year, int(month))) 
-							try:
-								invoice_buf[date].append(invoice)
-							except KeyError:
-								invoice_buf[date] = [invoice]
-			self.invoices.delete(0, tk.END)
-			for date, numbers in sorted(invoice_buf.items(), key=lambda x: x[0]):	
-				for number in sorted(numbers, key=lambda x: int(x.split()[-1]), reverse=True):
-					self.invoices.insert(tk.END, date+': '+number)
+			try:
+				with open(self.filepath.get(), 'r') as file:
+					table = csv.DictReader(file)
+					for invoice_info in table:
+						for date, number in invoice_info.items():
+							if number:
+								year, month = date.split('/')
+								invoice = '{}: {:>}'.format(number,
+									self.parent.crawler.get_price(number, year, int(month))) 
+								try:
+									invoice_buf[date].append(invoice)
+								except KeyError:
+									invoice_buf[date] = [invoice]
+			except FileNotFoundError:
+				messagebox.showerror(title='無法開啟檔案', message='請選擇要開啟的檔案')
+			else:
+				self.invoices.delete(0, tk.END)
+				for date, numbers in sorted(invoice_buf.items(), key=lambda x: x[0]):	
+					for number in sorted(numbers, key=lambda x: int(x.split()[-1]), reverse=True):
+						self.invoices.insert(tk.END, date+': '+number)
 
 	def __init__(self):
 		super().__init__()
@@ -166,3 +170,22 @@ class Redeem(tk.Toplevel):
 		self.nb.add(input_tab, text='手動輸入')
 		self.nb.add(self.SearchFromFileTab(self), text='從檔案讀入')
 		self.nb.pack(fill='both')
+
+class Menu(tk.Tk):
+	def __init__(self):
+		super().__init__()
+		self.title('統一發票')
+		self.btn_analyze = tk.Button(self, text='歷年特別獎、特獎分析', command=lambda : self.new_window(Analyze))
+		self.btn_redeem = tk.Button(self, text='發票兌獎', command=lambda: self.new_window(Redeem))
+		self.btn_analyze.pack(fill='x')
+		self.btn_redeem.pack(fill='x')
+
+	def new_window(self, WindowType):
+		self.withdraw()
+		try:
+			form = WindowType()
+			self.wait_window(form)
+		except tk.TclError:
+			pass
+		finally:
+			self.deiconify()

@@ -25,8 +25,7 @@ class Crawler:
 			except requests.exceptions.ConnectionError:
 				pass
 		r.encoding = 'utf-8'
-		soup = BeautifulSoup(r.text, 'html.parser')
-		return soup
+		return BeautifulSoup(r.text, 'html.parser')
 
 	@staticmethod
 	def _crawling_pages(pages):
@@ -222,9 +221,3 @@ class RedeemCrawler(Crawler):
 	@property
 	def schedule(self):
 		return (len(self.pages) if hasattr(self, 'prize_numbers') else self.q.qsize(), len(self.pages))
-
-
-
-if __name__ == '__main__':
-	crawler = RedeemCrawler()
-	crawler.crawling()

@@ -1,13 +1,14 @@
-from os import path
+from os import path, getcwd
 from matplotlib.figure import Figure
 from matplotlib.font_manager import FontProperties
 
 class PieChart(Figure):
 	def __init__(self, cnt):
 		super().__init__(figsize=(7, 5))
-		self.font_lg = FontProperties(fname=path.abspath('../fonts/NotoSansTC-Regular.otf'), size=16)
-		self.font_md = FontProperties(fname=path.abspath('../fonts/NotoSansTC-Regular.otf'), size=14)
-		self.font_sm = FontProperties(fname=path.abspath('../fonts/NotoSansTC-Regular.otf'), size=10)
+		fontpath = path.join(getcwd(), 'fonts', 'NotoSansTC-Regular.otf')
+		self.font_lg = FontProperties(fname=fontpath, size=16)
+		self.font_md = FontProperties(fname=fontpath, size=14)
+		self.font_sm = FontProperties(fname=fontpath, size=10)
 		self.data = cnt.most_common(24) # 25(max legend size) = 5(col) * 5(row)
 		self.others = sum( i[1] for i in (set(cnt.items()) - set(self.data)) )
 		if self.others:
