@@ -2,6 +2,7 @@ from os import path, getcwd
 from matplotlib.figure import Figure
 from matplotlib.font_manager import FontProperties
 
+
 class PieChart(Figure):
 	def __init__(self, cnt):
 		super().__init__(figsize=(7, 5))

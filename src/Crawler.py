@@ -44,6 +44,21 @@ class Crawler:
 
 
 class AnalyzeCrawler(Crawler):
+	class IterDates:
+		def __init__(self, dates, start, end):
+			self.dates = dates
+			self.now = start
+			self.idx = self.dates.index(self.now)
+			self.end = end
+
+		def __iter__(self):
+			while self.now != self.end:
+				yield self.now
+				self.idx += 1
+				self.now = self.dates[self.idx]
+			yield self.now
+
+
 	def __init__(self):
 		super().__init__()
 		self.Invoice = namedtuple('Invoice', ['com', 'addr', 'items', 'spent'])
@@ -100,19 +115,15 @@ class AnalyzeCrawler(Crawler):
 
 	def get_date_range_info(self, earlier_date, later_date):
 		dates = self.dates
-		now = dates.index(later_date)
 		thousand_addrs = Counter()
 		thousand_items = Counter()
 		two_hundred_addrs = Counter()
 		two_hundred_items = Counter()
-		while True:
+		for date in self.IterDates(dates, later_date, earlier_date):
 			for price, obj in (('thousand', (thousand_addrs, thousand_items)), ('two_hundred', (two_hundred_addrs, two_hundred_items))):
-				obj[0].update([ i.addr for i in self.invoices[dates[now]][price] ])
-				for i in self.invoices[dates[now]][price]:
+				obj[0].update([ i.addr for i in self.invoices[date][price] ])
+				for i in self.invoices[date][price]:
 					obj[1].update(i.items)
-			if dates[now] == earlier_date:
-				break
-			now += 1
 		return [thousand_items, thousand_addrs, two_hundred_items, two_hundred_addrs]
 
 	@property

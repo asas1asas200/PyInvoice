@@ -80,22 +80,20 @@ class Analyze(tk.Toplevel):
 		beg = self.search_bar.start_date.get()
 		end = self.search_bar.end_date.get()
 		try:
-			range_info = self.crawler.get_date_range_info(beg, end)
+			for tab, info in zip(self.tabs.values(), self.crawler.get_date_range_info(beg, end)):
+				tab.display_chart(info)
 		except ValueError:
 			messagebox.showerror(title='開始或結束時間為空值', message='請選擇時間區段！')
 		except IndexError:
 			messagebox.showerror(title='時間區段錯誤', message='開始必須比結束來得早！')
-		else:
-			for tab, info in zip(self.tabs.values(), range_info):
-				tab.display_chart(info)
 
 
 class Redeem(tk.Toplevel):
 	class SearchByInputTab(tk.Frame):
-		def __init__(self, parent, years):
+		def __init__(self, parent):
 			super().__init__(parent)
 			self.parent = parent
-			self.years_selector = ttk.Combobox(self, values=years, state='readonly')
+			self.years_selector = ttk.Combobox(self, values=parent.crawler.years, state='readonly')
 			self.months_selector = ttk.Combobox(self, values=['{:02d} ~ {:02d} 月'.format(i-1, i) for i in range(12, 1, -2)], state='readonly')
 			self.history = tk.Listbox(self)
 			self.entry = tk.Entry(self)
@@ -166,8 +164,7 @@ class Redeem(tk.Toplevel):
 		self.title('發票兌獎')
 		loading_window(self, RedeemCrawler)
 		self.nb = ttk.Notebook(self)
-		input_tab = self.SearchByInputTab(self, self.crawler.years)
-		self.nb.add(input_tab, text='手動輸入')
+		self.nb.add(self.SearchByInputTab(self), text='手動輸入')
 		self.nb.add(self.SearchFromFileTab(self), text='從檔案讀入')
 		self.nb.pack(fill='both')
 
@@ -175,11 +172,9 @@ class Menu(tk.Tk):
 	def __init__(self):
 		super().__init__()
 		self.title('統一發票')
-		self.btn_analyze = tk.Button(self, text='歷年特別獎、特獎分析', command=lambda : self.new_window(Analyze))
-		self.btn_redeem = tk.Button(self, text='發票兌獎', command=lambda: self.new_window(Redeem))
-		self.btn_analyze.pack(fill='x')
-		self.btn_redeem.pack(fill='x')
-
+		tk.Button(self, text='歷年特別獎、特獎分析', command=lambda : self.new_window(Analyze)).pack(fill='x')
+		tk.Button(self, text='發票兌獎', command=lambda: self.new_window(Redeem)).pack(fill='x')
+		
 	def new_window(self, WindowType):
 		self.withdraw()
 		try:
