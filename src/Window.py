@@ -1,6 +1,5 @@
 import csv
 from threading import Thread
-from typing import Collection
 import requests
 import tkinter as tk
 from tkinter import messagebox, ttk, filedialog
