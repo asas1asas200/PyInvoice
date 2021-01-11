@@ -21,13 +21,14 @@ class ProgressWindow(tk.Toplevel):
 		ttk.Progressbar(self, variable=self.progress_var, maximum=self.total).pack(fill='both')
 
 	def loading(self, crawler):
-		Thread(target=crawler.crawling).start()		
+		Thread(target=crawler.crawling).start()
 		while self.done != self.total:
 			self.update()
 			self.done = crawler.schedule[0]
 			self.progress_var.set(self.done)
 			self.prompt_text.set(f'正在下載頁面資料： {self.done: 3d}/{self.total: 3d}')
 		self.destroy()
+
 
 def loading_window(window, CrawlerType):
 	try:
@@ -39,6 +40,7 @@ def loading_window(window, CrawlerType):
 		window.destroy()
 	finally:
 		window.deiconify()
+
 
 class Analyze(tk.Toplevel):
 	class SearchBar(tk.Frame):
@@ -55,6 +57,7 @@ class Analyze(tk.Toplevel):
 	class InfoTab(tk.Frame):
 		def __init__(self, parent):
 			super().__init__(parent)
+
 		def display_chart(self, cnt):
 			try:
 				self.pie.destroy()
@@ -71,7 +74,7 @@ class Analyze(tk.Toplevel):
 		self.search_bar = self.SearchBar(self, self.crawler.dates)
 		self.search_bar.pack()
 		self.nb = ttk.Notebook(self)
-		self.tabs = { name: self.InfoTab(self.nb) for name in self.crawler.titles }
+		self.tabs = {name: self.InfoTab(self.nb) for name in self.crawler.titles}
 		for tab, title in zip(self.tabs.values(), self.crawler.titles):
 			self.nb.add(tab, text=title)
 		self.nb.pack(fill='both')
@@ -147,8 +150,9 @@ class Redeem(tk.Toplevel):
 						for date, number in invoice_info.items():
 							if number:
 								year, month = date.split('/')
-								invoice = '{}: {:>} 元'.format(number,
-									self.parent.crawler.get_price(number, year, int(month))) 
+								invoice = '{}: {:>} 元'.format(
+									number,
+									self.parent.crawler.get_price(number, year, int(month)))
 								try:
 									invoice_buf[date].append(invoice)
 								except KeyError:
@@ -157,10 +161,9 @@ class Redeem(tk.Toplevel):
 				messagebox.showerror(title='無法開啟檔案', message='請選擇要開啟的檔案')
 			else:
 				self.invoices.delete(0, tk.END)
-				for date, numbers in sorted(invoice_buf.items(), key=lambda x: x[0]):	
+				for date, numbers in sorted(invoice_buf.items(), key=lambda x: x[0]):
 					for number in sorted(numbers, key=lambda x: int(x.split()[-2]), reverse=True):
 						self.invoices.insert(tk.END, date+': '+number)
-
 
 	def __init__(self):
 		super().__init__()
@@ -188,9 +191,9 @@ class Menu(tk.Tk):
 	def __init__(self):
 		super().__init__()
 		self.title('統一發票')
-		tk.Button(self, text='歷年特別獎、特獎分析', command=lambda : self.new_window(Analyze)).pack(fill='x')
+		tk.Button(self, text='歷年特別獎、特獎分析', command=lambda: self.new_window(Analyze)).pack(fill='x')
 		tk.Button(self, text='發票兌獎', command=lambda: self.new_window(Redeem)).pack(fill='x')
-		
+
 	def new_window(self, WindowType):
 		self.withdraw()
 		try:

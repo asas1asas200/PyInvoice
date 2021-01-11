@@ -5,6 +5,7 @@ from collections import namedtuple, Counter
 import requests
 from bs4 import BeautifulSoup
 
+
 class Crawler:
 	def __init__(self):
 		self.home = 'https://www.etax.nat.gov.tw/'
@@ -14,11 +15,11 @@ class Crawler:
 			raise Err
 		self.soup = self.parse_page('https://www.etax.nat.gov.tw/etw-main/web/ETW183W1/')
 		self.q = Queue()
-		self.pages = []	
+		self.pages = []
 
 	@staticmethod
 	def parse_page(url):
-		while True:	
+		while True:
 			try:
 				r = requests.get(url)
 				break
@@ -58,11 +59,10 @@ class AnalyzeCrawler(Crawler):
 				self.now = self.dates[self.idx]
 			yield self.now
 
-
 	def __init__(self):
 		super().__init__()
 		self.Invoice = namedtuple('Invoice', ['com', 'addr', 'items', 'spent'])
-		self.pages = [ self.home + i.find('a')['href'] for i in self.soup.find_all('td', {'headers': 'title'})[:-8:2] ]
+		self.pages = [self.home + i.find('a')['href'] for i in self.soup.find_all('td', {'headers': 'title'})[:-8:2]]
 
 	def crawling(self):
 		@self._crawling_pages(self.pages)
@@ -100,7 +100,7 @@ class AnalyzeCrawler(Crawler):
 			date = soup.find('a', {'data-toggle': 'tab'}).text[:-15]
 			thousand = []
 			two_hundred = []
-			for html_id, price in (('fbonly', thousand), ('fbonly_200', two_hundred)): # 1000W and 200W
+			for html_id, price in (('fbonly', thousand), ('fbonly_200', two_hundred)):	# 1000W and 200W
 				for invoice in soup.find(id=html_id).select('tr')[1:]:
 					com, addr, items = [i.text for i in invoice.select('td')[-3:]]
 					addr = parse_addr(addr)
@@ -114,14 +114,13 @@ class AnalyzeCrawler(Crawler):
 			self.invoices.update(self.q.get())
 
 	def get_date_range_info(self, earlier_date, later_date):
-		dates = self.dates
 		thousand_addrs = Counter()
 		thousand_items = Counter()
 		two_hundred_addrs = Counter()
 		two_hundred_items = Counter()
-		for date in self.IterDates(dates, later_date, earlier_date):
+		for date in self.IterDates(self.dates, later_date, earlier_date):
 			for price, obj in (('thousand', (thousand_addrs, thousand_items)), ('two_hundred', (two_hundred_addrs, two_hundred_items))):
-				obj[0].update([ i.addr for i in self.invoices[date][price] ])
+				obj[0].update([i.addr for i in self.invoices[date][price]])
 				for i in self.invoices[date][price]:
 					obj[1].update(i.items)
 		return [thousand_items, thousand_addrs, two_hundred_items, two_hundred_addrs]
@@ -137,6 +136,7 @@ class AnalyzeCrawler(Crawler):
 				for j in i[price]:
 					ret.append(getattr(j, attr))
 		return sorted(ret)
+
 	@property
 	def titles(self):
 		return ['特別獎1000萬--交易項目', '特別獎1000萬--縣市', '特獎200萬--交易項目', '特獎200萬--縣市']
@@ -168,7 +168,7 @@ class RedeemCrawler(Crawler):
 
 	def __init__(self):
 		super().__init__()
-		self.pages = [ self.home + i.find('a')['href'] for i in self.soup.find_all('td', {'headers': 'title'})[1:-8:2] ]
+		self.pages = [self.home + i.find('a')['href'] for i in self.soup.find_all('td', {'headers': 'title'})[1:-8:2]]
 
 	def crawling(self):
 		@self._crawling_pages(self.pages)
@@ -177,14 +177,14 @@ class RedeemCrawler(Crawler):
 			lst = soup.select('tbody tr')
 			title = soup.find('td', {'class': 'title'}).text
 			year = re.search(r'(\d+)年', title).group(1)
-			months = [ int(i) for i in title.split()[1:4:2] ]
+			months = [int(i) for i in title.split()[1:4:2]]
 			info = self.PrizeInfo(
 				re.search(r'\d+', lst[1].text).group(),
 				re.search(r'\d+', lst[3].text).group(),
 				re.search(r'((\d+).*)', lst[5].text).group().split(),
-				[ i for i in re.split(r'[、 ]', re.search(r'((\d+).*)', lst[12].text).group()) if i ]
+				[i for i in re.split(r'[、 ]', re.search(r'((\d+).*)', lst[12].text).group()) if i]
 			)
-			self.q.put(( year, [ (month, info) for month in months ] ))
+			self.q.put((year, [(month, info) for month in months]))
 
 		get_prize_number()
 		self.prize_numbers = {}

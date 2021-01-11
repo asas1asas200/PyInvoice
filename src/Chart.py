@@ -10,14 +10,14 @@ class PieChart(Figure):
 		self.font_lg = FontProperties(fname=fontpath, size=16)
 		self.font_md = FontProperties(fname=fontpath, size=14)
 		self.font_sm = FontProperties(fname=fontpath, size=10)
-		self.data = cnt.most_common(24) # 25(max legend size) = 5(col) * 5(row)
-		self.others = sum( i[1] for i in (set(cnt.items()) - set(self.data)) )
+		self.data = cnt.most_common(24)		# 25(max legend size) = 5(col) * 5(row)
+		self.others = sum(i[1] for i in (set(cnt.items()) - set(self.data)))
 		if self.others:
 			self.data.append(('其他項目', self.others))
 		self.p = self.gca()
-		self.p.pie([ i[1] for i in self.data ], shadow=True)
+		self.p.pie([i[1] for i in self.data], shadow=True)
 		self.p.legend(
-			labels=[ key + ' - ' + str(val) for key, val in self.data ],
+			labels=[key + ' - ' + str(val) for key, val in self.data],
 			prop=self.font_sm,
 			loc='lower center',
 			ncol=5,
