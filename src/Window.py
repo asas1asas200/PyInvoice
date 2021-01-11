@@ -1,5 +1,6 @@
 import csv
 from threading import Thread
+from typing import Collection
 import requests
 import tkinter as tk
 from tkinter import messagebox, ttk, filedialog
@@ -130,6 +131,7 @@ class Redeem(tk.Toplevel):
 			tk.Button(self, text='選擇檔案...', command=self.open_file).grid(column=1, row=0)
 			tk.Button(self, text='查詢', command=self.search).grid(column=2, row=0, sticky=tk.EW)
 			self.invoices.grid(column=0, row=1, columnspan=3, sticky=tk.EW)
+			tk.Button(self, text='只顯示中獎發票', command=self.winning_only).grid(column=0, row=2, columnspan=3, sticky=tk.EW)
 
 		def open_file(self):
 			filepath = filedialog.askopenfilename(initialdir='.', title='Select file', filetypes=(('csv files', '*.csv'),))
@@ -158,6 +160,18 @@ class Redeem(tk.Toplevel):
 				for date, numbers in sorted(invoice_buf.items(), key=lambda x: x[0]):	
 					for number in sorted(numbers, key=lambda x: int(x.split()[-1]), reverse=True):
 						self.invoices.insert(tk.END, date+': '+number)
+
+		def winning_only(self):
+			now = 0
+			try:
+				while True:
+					if int(self.invoices.get(now).split()[-1]):
+						now += 1
+					else:
+						self.invoices.delete(now)
+			except IndexError:
+				pass
+
 
 	def __init__(self):
 		super().__init__()
