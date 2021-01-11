@@ -106,6 +106,7 @@ class Redeem(tk.Toplevel):
 			self.months_selector.grid(column=1, row=1)
 			self.history.grid(column=0, row=2, columnspan=2, sticky=tk.EW)
 			self.entry.grid(column=0, row=3, columnspan=2, sticky=tk.EW)
+			tk.Button(self, text='只顯示中獎發票', command=lambda: parent.winning_only(self.history)).grid(column=0, row=4, columnspan=2, sticky=tk.EW)
 
 		def search(self, event):
 			number = self.entry.get()
@@ -116,7 +117,7 @@ class Redeem(tk.Toplevel):
 			except KeyError:
 				messagebox.showerror(title='日期錯誤', message='還沒有該日期的發票資訊')
 			else:
-				self.history.insert(tk.END, '{}: {:>}元'.format(number, price))
+				self.history.insert(tk.END, '{}: {:>} 元'.format(number, price))
 				self.history.yview(tk.END)
 			finally:
 				self.entry.delete(0, tk.END)
@@ -131,7 +132,7 @@ class Redeem(tk.Toplevel):
 			tk.Button(self, text='選擇檔案...', command=self.open_file).grid(column=1, row=0)
 			tk.Button(self, text='查詢', command=self.search).grid(column=2, row=0, sticky=tk.EW)
 			self.invoices.grid(column=0, row=1, columnspan=3, sticky=tk.EW)
-			tk.Button(self, text='只顯示中獎發票', command=self.winning_only).grid(column=0, row=2, columnspan=3, sticky=tk.EW)
+			tk.Button(self, text='只顯示中獎發票', command=lambda: parent.winning_only(self.invoices)).grid(column=0, row=2, columnspan=3, sticky=tk.EW)
 
 		def open_file(self):
 			filepath = filedialog.askopenfilename(initialdir='.', title='Select file', filetypes=(('csv files', '*.csv'),))
@@ -147,7 +148,7 @@ class Redeem(tk.Toplevel):
 						for date, number in invoice_info.items():
 							if number:
 								year, month = date.split('/')
-								invoice = '{}: {:>}'.format(number,
+								invoice = '{}: {:>} 元'.format(number,
 									self.parent.crawler.get_price(number, year, int(month))) 
 								try:
 									invoice_buf[date].append(invoice)
@@ -158,19 +159,8 @@ class Redeem(tk.Toplevel):
 			else:
 				self.invoices.delete(0, tk.END)
 				for date, numbers in sorted(invoice_buf.items(), key=lambda x: x[0]):	
-					for number in sorted(numbers, key=lambda x: int(x.split()[-1]), reverse=True):
+					for number in sorted(numbers, key=lambda x: int(x.split()[-2]), reverse=True):
 						self.invoices.insert(tk.END, date+': '+number)
-
-		def winning_only(self):
-			now = 0
-			try:
-				while True:
-					if int(self.invoices.get(now).split()[-1]):
-						now += 1
-					else:
-						self.invoices.delete(now)
-			except IndexError:
-				pass
 
 
 	def __init__(self):
@@ -181,6 +171,19 @@ class Redeem(tk.Toplevel):
 		self.nb.add(self.SearchByInputTab(self), text='手動輸入')
 		self.nb.add(self.SearchFromFileTab(self), text='從檔案讀入')
 		self.nb.pack(fill='both')
+
+	@staticmethod
+	def winning_only(listbox):
+		now = 0
+		try:
+			while True:
+				if int(listbox.get(now).split()[-2]):
+					now += 1
+				else:
+					listbox.delete(now)
+		except IndexError:
+			pass
+
 
 class Menu(tk.Tk):
 	def __init__(self):
